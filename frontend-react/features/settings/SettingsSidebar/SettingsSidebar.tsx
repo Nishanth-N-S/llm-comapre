@@ -1,7 +1,7 @@
 import React from 'react';
 import { Key, Sliders, Bell, User } from 'lucide-react';
 
-type Tab = 'api-keys' | 'evaluation' | 'notifications' | 'profile';
+type Tab = 'api-keys' | 'evaluation';
 
 interface SettingsSidebarProps {
   activeTab: Tab;
