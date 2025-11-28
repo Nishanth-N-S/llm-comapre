@@ -1,0 +1,5 @@
+{
+  "name": "LLMCompare",
+  "description": "A dashboard for managing and analyzing Large Language Model comparisons.",
+  "requestFramePermissions": []
+}

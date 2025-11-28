@@ -1,0 +1,165 @@
+import React, { useMemo, useState } from 'react';
+import FormStep from './FormStep';
+
+interface ModelsProps {
+  selectedModels: string[];
+  onModelsChange: (models: string[]) => void;
+}
+
+type Provider = {
+  id: string;
+  name: string;
+  models: string[];
+};
+
+const providers: Provider[] = [
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    models: ['GPT-4o', 'GPT-4o-mini', 'GPT-4o-code', 'GPT-4o-instruct', 'GPT-3.5-turbo']
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic',
+    models: ['Claude 3 Opus', 'Claude 3 Sonnet', 'Claude 3 Haiku']
+  },
+  {
+    id: 'google',
+    name: 'Google',
+    models: ['Gemini 1.5 Pro', 'Gemini Nano', 'Gemini 1.0']
+  },
+  {
+    id: 'meta',
+    name: 'Meta',
+    models: ['Llama 3 70B', 'Llama 3 16B']
+  },
+  {
+    id: 'mistral',
+    name: 'Mistral',
+    models: ['Mistral Large', 'Mistral Small']
+  }
+];
+
+const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
+  const [activeProviderId, setActiveProviderId] = useState<string>(providers[0].id);
+  const [query, setQuery] = useState('');
+
+  const activeProvider = useMemo(() => providers.find(p => p.id === activeProviderId) || providers[0], [activeProviderId]);
+
+  const visibleModels = useMemo(() => {
+    if (!query.trim()) return activeProvider.models;
+    const q = query.toLowerCase();
+    return activeProvider.models.filter(m => m.toLowerCase().includes(q));
+  }, [activeProvider, query]);
+
+  const toggleModel = (model: string) => {
+    if (selectedModels.includes(model)) {
+      onModelsChange(selectedModels.filter(m => m !== model));
+    } else {
+      onModelsChange([...selectedModels, model]);
+    }
+  };
+
+  const selectAllVisible = () => {
+    const toAdd = visibleModels.filter(m => !selectedModels.includes(m));
+    if (toAdd.length) onModelsChange([...selectedModels, ...toAdd]);
+  };
+
+  const clearAllVisible = () => {
+    const remaining = selectedModels.filter(m => !visibleModels.includes(m));
+    onModelsChange(remaining);
+  };
+
+  return (
+    <FormStep stepNumber={2} title="Models">
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex-1">
+            <p className="text-black dark:text-white text-base font-medium leading-normal">LLM Models</p>
+            <p className="text-slate-400 dark:text-slate-500 text-sm">Choose a provider to view its models</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {selectedModels.length > 0 && (
+              <span className="text-primary text-sm font-medium">
+                {selectedModels.length} selected
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-3 overflow-x-auto">
+          {providers.map((p) => {
+            const isActive = p.id === activeProviderId;
+            const selectedCount = p.models.filter(m => selectedModels.includes(m)).length;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => { setActiveProviderId(p.id); setQuery(''); }}
+                className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-all ${isActive ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'}`}
+              >
+                {p.name}
+                <span className="ml-2 text-xs font-normal text-slate-400">({p.models.length}{selectedCount ? ` • ${selectedCount}` : ''})</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 mb-3">
+          <input
+            type="search"
+            placeholder={`Search ${activeProvider.name} models...`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="form-input flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-sm"
+          />
+          <button
+            type="button"
+            onClick={selectAllVisible}
+            className="text-sm text-primary hover:underline"
+            aria-label="Select all visible models"
+          >
+            Select all
+          </button>
+          <button
+            type="button"
+            onClick={clearAllVisible}
+            className="text-sm text-slate-500 hover:underline"
+            aria-label="Clear visible selections"
+          >
+            Clear
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50/50 dark:bg-slate-900/50">
+          {visibleModels.map((model) => {
+            const isSelected = selectedModels.includes(model);
+            return (
+              <label
+                key={model}
+                className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? 'border-primary bg-primary/10 dark:bg-primary/20' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-primary/50'}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleModel(model)}
+                  className="w-4 h-4 text-primary border-slate-300 dark:border-slate-600 rounded focus:ring-primary focus:ring-2 flex-shrink-0"
+                />
+                <span className={`text-sm font-medium flex-grow ${isSelected ? 'text-primary' : 'text-black dark:text-white'}`}>
+                  {model}
+                </span>
+                {isSelected && (
+                  <span className="material-symbols-outlined !text-base text-primary flex-shrink-0">
+                    check_circle
+                  </span>
+                )}
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    </FormStep>
+  );
+};
+
+export default Models;
