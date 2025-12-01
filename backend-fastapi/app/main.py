@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import health, comparisons, statuses, stats
+from app.routers import health, comparisons, statuses, stats, models
 
 app = FastAPI(
     title="LLM Compare",
@@ -18,6 +18,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(comparisons.router)
+app.include_router(models.router)
 app.include_router(statuses.router)
 app.include_router(stats.router)
 

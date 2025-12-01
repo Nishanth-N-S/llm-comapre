@@ -48,3 +48,29 @@ export const deleteComparisons = async (
   
   return response.data;
 };
+
+export interface CreateComparisonRequest {
+  name: string;
+  description: string;
+  systemPrompt: string;
+  userPrompt: string;
+  models: string[];
+  criteria: string[];
+}
+
+export interface CreateComparisonResponse {
+  success: boolean;
+  comparisonId: string;
+  message: string;
+}
+
+export const createComparison = async (
+  data: CreateComparisonRequest
+): Promise<CreateComparisonResponse> => {
+  const response = await apiClient.post<CreateComparisonResponse>(
+    '/comparisons',
+    data
+  );
+  
+  return response.data;
+};

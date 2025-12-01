@@ -24,6 +24,20 @@ class ComparisonResponse(ComparisonBase):
     class Config:
         from_attributes = True
 
+class CreateComparisonRequest(BaseModel):
+    name: str
+    description: str
+    systemPrompt: str
+    userPrompt: str
+    models: List[str]
+    criteria: List[str]
+
+class CreateComparisonResponse(BaseModel):
+    success: bool
+    comparisonId: str
+    message: str
+    results: Optional[List[dict]] = None
+
 class PaginationMeta(BaseModel):
     currentPage: int
     totalPages: int

@@ -1,50 +1,45 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import FormStep from './FormStep';
+import { getModels, Provider } from '../../api';
 
 interface ModelsProps {
   selectedModels: string[];
   onModelsChange: (models: string[]) => void;
 }
 
-type Provider = {
-  id: string;
-  name: string;
-  models: string[];
-};
-
-const providers: Provider[] = [
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    models: ['GPT-4o', 'GPT-4o-mini', 'GPT-4o-code', 'GPT-4o-instruct', 'GPT-3.5-turbo']
-  },
-  {
-    id: 'anthropic',
-    name: 'Anthropic',
-    models: ['Claude 3 Opus', 'Claude 3 Sonnet', 'Claude 3 Haiku']
-  },
-  {
-    id: 'google',
-    name: 'Google',
-    models: ['Gemini 1.5 Pro', 'Gemini Nano', 'Gemini 1.0']
-  },
-  {
-    id: 'meta',
-    name: 'Meta',
-    models: ['Llama 3 70B', 'Llama 3 16B']
-  },
-  {
-    id: 'mistral',
-    name: 'Mistral',
-    models: ['Mistral Large', 'Mistral Small']
-  }
-];
-
 const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
-  const [activeProviderId, setActiveProviderId] = useState<string>(providers[0].id);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeProviderId, setActiveProviderId] = useState<string>('');
   const [query, setQuery] = useState('');
 
-  const activeProvider = useMemo(() => providers.find(p => p.id === activeProviderId) || providers[0], [activeProviderId]);
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        setLoading(true);
+        const response = await getModels();
+        setProviders(response.providers);
+        if (response.providers.length > 0) {
+          setActiveProviderId(response.providers[0].id);
+        }
+        setError(null);
+      } catch (err) {
+        setError('Failed to load models');
+        console.error('Error fetching models:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  const defaultProvider: Provider = { id: '', name: '', models: [] };
+  const activeProvider = useMemo(
+    () => providers.find(p => p.id === activeProviderId) || defaultProvider,
+    [activeProviderId, providers]
+  );
 
   const visibleModels = useMemo(() => {
     if (!query.trim()) return activeProvider.models;
@@ -69,6 +64,36 @@ const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
     const remaining = selectedModels.filter(m => !visibleModels.includes(m));
     onModelsChange(remaining);
   };
+
+  if (loading) {
+    return (
+      <FormStep stepNumber={2} title="Models">
+        <div className="flex items-center justify-center py-8">
+          <p className="text-slate-500 dark:text-slate-400">Loading models...</p>
+        </div>
+      </FormStep>
+    );
+  }
+
+  if (error) {
+    return (
+      <FormStep stepNumber={2} title="Models">
+        <div className="flex items-center justify-center py-8">
+          <p className="text-red-500">{error}</p>
+        </div>
+      </FormStep>
+    );
+  }
+
+  if (providers.length === 0) {
+    return (
+      <FormStep stepNumber={2} title="Models">
+        <div className="flex items-center justify-center py-8">
+          <p className="text-slate-500 dark:text-slate-400">No models available</p>
+        </div>
+      </FormStep>
+    );
+  }
 
   return (
     <FormStep stepNumber={2} title="Models">

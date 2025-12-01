@@ -4,6 +4,7 @@ import Models from '../features/create/Models';
 import PromptDefinition from '../features/create/PromptDefinition';
 import Evaluation from '../features/create/Evaluation/Evaluation';
 import ComparisonSummary from '../features/create/ComparisonSummary';
+import { createComparison } from '../api';
 
 interface CreateComparisonProps {
   onCancel: () => void;
@@ -17,7 +18,48 @@ const CreateComparison: React.FC<CreateComparisonProps> = ({ onCancel, onSaveDra
   const [systemPrompt, setSystemPrompt] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
   const [criteria, setCriteria] = useState<string[]>(['Clarity', 'Conciseness', 'Code Quality']);
-  const [selectedModels, setSelectedModels] = useState<string[]>(['GPT-4o', 'Claude 3 Opus']);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleRunComparison = async () => {
+    if (!name.trim()) {
+      setSubmitError('Comparison name is required');
+      return;
+    }
+
+    if (selectedModels.length === 0) {
+      setSubmitError('Please select at least one model');
+      return;
+    }
+
+    if (!userPrompt.trim()) {
+      setSubmitError('User prompt is required');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      const response = await createComparison({
+        name,
+        description,
+        systemPrompt,
+        userPrompt,
+        models: selectedModels,
+        criteria,
+      });
+
+      console.log('Comparison created:', response);
+      onRun();
+    } catch (error) {
+      console.error('Error creating comparison:', error);
+      setSubmitError('Failed to create comparison. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="w-full h-full overflow-y-auto bg-background-light dark:bg-background-dark p-4 sm:p-6 lg:p-8">
@@ -60,10 +102,16 @@ const CreateComparison: React.FC<CreateComparisonProps> = ({ onCancel, onSaveDra
               onCriteriaChange={setCriteria}
             />
 
+            {submitError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+                {submitError}
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-4 pt-4">
-              <button onClick={onCancel} className="text-slate-500 dark:text-slate-400 text-sm font-bold leading-normal hover:text-black dark:hover:text-white transition-colors">Cancel</button>
-              <button onClick={onRun} className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-8 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary-hover transition-colors">
-                <span className="truncate">Run Comparison</span>
+              <button onClick={onCancel} className="text-slate-500 dark:text-slate-400 text-sm font-bold leading-normal hover:text-black dark:hover:text-white transition-colors" disabled={isSubmitting}>Cancel</button>
+              <button onClick={handleRunComparison} className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-8 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={isSubmitting}>
+                <span className="truncate">{isSubmitting ? 'Creating...' : 'Run Comparison'}</span>
               </button>
             </div>
           </div>

@@ -1,0 +1,2 @@
+backend-fastapi/app/scripts/init_db.py
+backend-fastapi/app/scripts/seed_data.py

@@ -19,13 +19,33 @@ class MasterStatus(Base, AuditMixin):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False, index=True)
 
+class MasterProvider(Base, AuditMixin):
+    __tablename__ = "master_providers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    models = relationship("MasterModel", back_populates="provider")
+
+class MasterModel(Base, AuditMixin):
+    __tablename__ = "master_models"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey("master_providers.id"), nullable=False, index=True)
+    provider = relationship("MasterProvider", back_populates="models", lazy="joined")
+
 class Comparison(Base, AuditMixin):
     __tablename__ = "comparisons"
     
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     name = Column(String(255), nullable=False, index=True)
+    description = Column(String(1000), nullable=True)
+    system_prompt = Column(String, nullable=False)
+    user_prompt = Column(String, nullable=False)
     status_id = Column(Integer, ForeignKey("master_statuses.id"), nullable=False, index=True)
     models = Column(ARRAY(String), nullable=False)
+    criteria = Column(ARRAY(String), nullable=True)
+    results = Column(String, nullable=True)
     score = Column(String(50), nullable=True)
     date_created = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     master_status = relationship("MasterStatus", lazy="joined")

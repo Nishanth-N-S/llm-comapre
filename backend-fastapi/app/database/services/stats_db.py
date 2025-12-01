@@ -1,9 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database.models import Comparison, MasterStatus
-from app.schemas.stats import GetStatsResponse
+from typing import Dict
 
-async def get_stats(db: AsyncSession) -> GetStatsResponse:
+async def get_comparison_stats(db: AsyncSession) -> Dict[str, int]:
+    """Get statistics about comparisons."""
     total_result = await db.execute(select(func.count(Comparison.id)))
     total = total_result.scalar() or 0
     
@@ -17,4 +18,8 @@ async def get_stats(db: AsyncSession) -> GetStatsResponse:
     )
     errors = errors_result.scalar() or 0
     
-    return GetStatsResponse(total=total, running=running, errors=errors)
+    return {
+        "total": total,
+        "running": running,
+        "errors": errors
+    }
