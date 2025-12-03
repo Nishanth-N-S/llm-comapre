@@ -1,2 +1,3 @@
 backend-fastapi/app/scripts/init_db.py
 backend-fastapi/app/scripts/seed_data.py
+backend-fastapi/app/scripts/migrate_providers.py

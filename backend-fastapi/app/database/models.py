@@ -24,7 +24,18 @@ class MasterProvider(Base, AuditMixin):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(100), nullable=False)
+    auth_type = Column(String(50), nullable=False, default="api_key")
     models = relationship("MasterModel", back_populates="provider")
+    api_key_record = relationship("ProviderApiKey", back_populates="provider", uselist=False)
+
+class ProviderApiKey(Base, AuditMixin):
+    __tablename__ = "provider_api_keys"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    provider_id = Column(Integer, ForeignKey("master_providers.id"), unique=True, nullable=False, index=True)
+    api_key = Column(String(500), nullable=False)
+    provider = relationship("MasterProvider", back_populates="api_key_record")
 
 class MasterModel(Base, AuditMixin):
     __tablename__ = "master_models"

@@ -1,31 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SettingsSidebar from '../features/settings/SettingsSidebar/SettingsSidebar';
 import ApiKeysTab from '../features/settings/ApiKeysTab/ApiKeysTab';
-import EvaluationTab from '../features/settings/EvaluationTab/EvaluationTab';
+import { getProviders, saveApiKey, deleteApiKey, ProviderApiKey } from '../api';
 
 type Tab = 'api-keys' | 'evaluation';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('api-keys');
-
-  const [provider, setProvider] = useState('Select an AI Provider');
-  const [apiKey, setApiKey] = useState('••••••••••••••••••••••••••');
+  const [providers, setProviders] = useState<ProviderApiKey[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>('');
+  const [originalApiKey, setOriginalApiKey] = useState<string>('');
   const [showKey, setShowKey] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const [rubric, setRubric] = useState({
-    coherence: 40,
-    relevance: 30,
-    accuracy: 30
-  });
-  const [scoringConfig, setScoringConfig] = useState({
-    model: 'GPT-4 Turbo',
-    temperature: 0.5,
-    enableReasoning: true
-  });
+  const fetchProviders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getProviders();
+      setProviders(response.providers);
+      if (response.providers.length > 0 && !selectedProvider) {
+        const first = response.providers[0];
+        setSelectedProvider(first.provider);
+        setApiKey(first.apiKey || '');
+        setOriginalApiKey(first.apiKey || '');
+      }
+    } catch (error) {
+      console.error('Failed to fetch providers:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedProvider]);
 
-  const handleRubricChange = (key: keyof typeof rubric, value: number) => {
-    setRubric(prev => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  const handleProviderChange = (provider: string) => {
+    setSelectedProvider(provider);
+    const found = providers.find(p => p.provider === provider);
+    const key = found?.apiKey || '';
+    setApiKey(key);
+    setOriginalApiKey(key);
+    setShowKey(false);
   };
+
+  const handleSave = async () => {
+    if (!selectedProvider || apiKey === originalApiKey) return;
+    setSaving(true);
+    try {
+      await saveApiKey({ provider: selectedProvider, apiKey });
+      setOriginalApiKey(apiKey);
+      setProviders(prev => prev.map(p => 
+        p.provider === selectedProvider ? { ...p, apiKey } : p
+      ));
+    } catch (error) {
+      console.error('Failed to save API key:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedProvider) return;
+    setSaving(true);
+    try {
+      await deleteApiKey(selectedProvider);
+      setApiKey('');
+      setOriginalApiKey('');
+      setProviders(prev => prev.map(p => 
+        p.provider === selectedProvider ? { ...p, apiKey: null } : p
+      ));
+    } catch (error) {
+      console.error('Failed to delete API key:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasChanges = apiKey !== originalApiKey;
 
   return (
     <div className="flex flex-1 overflow-hidden bg-background-light dark:bg-background-dark">
@@ -37,21 +91,18 @@ const Settings: React.FC = () => {
           <main className="flex-1 flex flex-col gap-8">
             {activeTab === 'api-keys' && (
               <ApiKeysTab 
-                provider={provider}
-                setProvider={setProvider}
+                providers={providers}
+                selectedProvider={selectedProvider}
+                onProviderChange={handleProviderChange}
                 apiKey={apiKey}
                 setApiKey={setApiKey}
                 showKey={showKey}
                 setShowKey={setShowKey}
-              />
-            )}
-
-            {activeTab === 'evaluation' && (
-              <EvaluationTab 
-                rubric={rubric}
-                handleRubricChange={handleRubricChange}
-                scoringConfig={scoringConfig}
-                setScoringConfig={setScoringConfig}
+                hasChanges={hasChanges}
+                onSave={handleSave}
+                onDelete={handleDelete}
+                loading={loading}
+                saving={saving}
               />
             )}
           </main>

@@ -21,13 +21,6 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeTab, setActiveT
               <Key size={20} />
               <p className="text-sm font-medium leading-normal">API Keys</p>
             </button>
-            <button 
-              onClick={() => setActiveTab('evaluation')}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${activeTab === 'evaluation' ? 'bg-primary/10 dark:bg-gray-700/50 text-primary dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/30'}`}
-            >
-              <Sliders size={20} />
-              <p className="text-sm font-medium leading-normal">Evaluation</p>
-            </button>
           </div>
         </div>
       </div>

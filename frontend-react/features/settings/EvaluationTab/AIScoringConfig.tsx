@@ -49,17 +49,6 @@ const AIScoringConfig: React.FC<AIScoringConfigProps> = ({ scoringConfig, setSco
           />
         </div>
       </div>
-      <div className="mt-6">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input 
-            type="checkbox" 
-            checked={scoringConfig.enableReasoning}
-            onChange={(e) => setScoringConfig(prev => ({ ...prev, enableReasoning: e.target.checked }))}
-            className="form-checkbox h-5 w-5 rounded bg-gray-100 dark:bg-gray-700/50 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary/50" 
-          />
-          <span className="text-sm text-gray-700 dark:text-gray-300">Enable AI-powered reasoning for scores</span>
-        </label>
-      </div>
     </div>
   );
 };

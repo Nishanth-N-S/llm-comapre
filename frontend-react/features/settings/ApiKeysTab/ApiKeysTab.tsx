@@ -1,23 +1,36 @@
 import React from 'react';
 import ProviderSelect from './ProviderSelect';
 import ApiKeyInput from './ApiKeyInput';
+import { ProviderApiKey } from '../../../api';
 
 interface ApiKeysTabProps {
-  provider: string;
-  setProvider: (provider: string) => void;
+  providers: ProviderApiKey[];
+  selectedProvider: string;
+  onProviderChange: (provider: string) => void;
   apiKey: string;
   setApiKey: (key: string) => void;
   showKey: boolean;
   setShowKey: (show: boolean) => void;
+  hasChanges: boolean;
+  onSave: () => void;
+  onDelete: () => void;
+  loading: boolean;
+  saving: boolean;
 }
 
 const ApiKeysTab: React.FC<ApiKeysTabProps> = ({ 
-  provider, 
-  setProvider, 
+  providers,
+  selectedProvider,
+  onProviderChange,
   apiKey, 
   setApiKey, 
   showKey, 
-  setShowKey 
+  setShowKey,
+  hasChanges,
+  onSave,
+  onDelete,
+  loading,
+  saving
 }) => {
   return (
     <>
@@ -29,20 +42,43 @@ const ApiKeysTab: React.FC<ApiKeysTabProps> = ({
       </div>
 
       <div className="bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ProviderSelect provider={provider} setProvider={setProvider} />
-          <ApiKeyInput 
-            apiKey={apiKey} 
-            setApiKey={setApiKey} 
-            showKey={showKey} 
-            setShowKey={setShowKey} 
-          />
-        </div>
-        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700/50 flex justify-end">
-          <button className="flex items-center justify-center overflow-hidden rounded-lg h-10 bg-primary text-white gap-2 text-sm font-medium leading-normal tracking-[0.015em] px-5 hover:bg-primary-hover transition-colors">
-            Save Changes
-          </button>
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ProviderSelect 
+                providers={providers}
+                selectedProvider={selectedProvider}
+                onProviderChange={onProviderChange}
+              />
+              <ApiKeyInput 
+                apiKey={apiKey} 
+                setApiKey={setApiKey} 
+                showKey={showKey} 
+                setShowKey={setShowKey}
+                onDelete={onDelete}
+                saving={saving}
+                hasKey={!!apiKey}
+              />
+            </div>
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700/50 flex justify-end">
+              <button 
+                onClick={onSave}
+                disabled={!hasChanges || saving}
+                className={`flex items-center justify-center overflow-hidden rounded-lg h-10 gap-2 text-sm font-medium leading-normal tracking-[0.015em] px-5 transition-colors ${
+                  hasChanges && !saving
+                    ? 'bg-primary text-white hover:bg-primary-hover'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </>
   );

@@ -29,10 +29,10 @@ async def init_db():
         
         if not existing_providers:
             providers_data = [
-                {"id": 1, "name": "OpenAI"},
-                {"id": 2, "name": "Anthropic"},
-                {"id": 3, "name": "Google"},
-                {"id": 4, "name": "Ollama"}
+                {"id": 1, "name": "OpenAI", "display_name": "OpenAI", "auth_type": "api_key"},
+                {"id": 2, "name": "Anthropic", "display_name": "Anthropic", "auth_type": "api_key"},
+                {"id": 3, "name": "Google", "display_name": "Google AI", "auth_type": "api_key"},
+                {"id": 4, "name": "Ollama", "display_name": "Ollama (Local)", "auth_type": "none"}
             ]
             providers = [MasterProvider(**data) for data in providers_data]
             session.add_all(providers)
@@ -46,14 +46,12 @@ async def init_db():
         
         if not existing_models:
             models_data = [
-                {"name": "gpt-4", "provider_id": 1},
-                {"name": "gpt-4-turbo", "provider_id": 1},
-                {"name": "gpt-3.5-turbo", "provider_id": 1},
-                {"name": "claude-3-opus-20240229", "provider_id": 2},
-                {"name": "claude-3-sonnet-20240229", "provider_id": 2},
-                {"name": "claude-3-haiku-20240307", "provider_id": 2},
+                {"name": "gpt-5", "provider_id": 1},
+                {"name": "claude-4.5-opus9", "provider_id": 2},
+                {"name": "claude-4.5-sonnet", "provider_id": 2},
+                {"name": "claude-4.5-haiku", "provider_id": 2},
                 {"name": "gemini-pro", "provider_id": 3},
-                {"name": "gemini-1.5-pro", "provider_id": 3},
+                {"name": "gemini-2.5-flash", "provider_id": 3},
                 {"name": "llama2", "provider_id": 4},
                 {"name": "mistral", "provider_id": 4},
                 {"name": "codellama", "provider_id": 4}

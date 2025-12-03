@@ -6,9 +6,20 @@ interface ApiKeyInputProps {
   setApiKey: (key: string) => void;
   showKey: boolean;
   setShowKey: (show: boolean) => void;
+  onDelete: () => void;
+  saving: boolean;
+  hasKey: boolean;
 }
 
-const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ apiKey, setApiKey, showKey, setShowKey }) => {
+const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ 
+  apiKey, 
+  setApiKey, 
+  showKey, 
+  setShowKey,
+  onDelete,
+  saving,
+  hasKey
+}) => {
   return (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col min-w-40 flex-1">
@@ -30,10 +41,15 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ apiKey, setApiKey, showKey, s
         </div>
       </label>
       <div className="flex items-center gap-3">
-        <button className="flex items-center justify-center rounded-lg h-10 bg-gray-200 dark:bg-gray-700/50 text-gray-700 dark:text-white gap-2 text-sm font-medium leading-normal tracking-[0.015em] px-4 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-          Test Connection
-        </button>
-        <button className="flex items-center justify-center rounded-lg h-10 bg-red-500/10 text-red-500 gap-2 text-sm font-medium leading-normal tracking-[0.015em] px-4 hover:bg-red-500/20 transition-colors">
+        <button 
+          onClick={onDelete}
+          disabled={!hasKey || saving}
+          className={`flex items-center justify-center rounded-lg h-10 gap-2 text-sm font-medium leading-normal tracking-[0.015em] px-4 transition-colors ${
+            hasKey && !saving
+              ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+          }`}
+        >
           Delete Key
         </button>
       </div>

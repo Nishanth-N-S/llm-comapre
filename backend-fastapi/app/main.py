@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import health, comparisons, statuses, stats, models
+from app.routers import health, comparisons, statuses, stats, models, settings
 
 app = FastAPI(
     title="LLM Compare",
@@ -21,6 +21,7 @@ app.include_router(comparisons.router)
 app.include_router(models.router)
 app.include_router(statuses.router)
 app.include_router(stats.router)
+app.include_router(settings.router)
 
 @app.get("/")
 async def root():

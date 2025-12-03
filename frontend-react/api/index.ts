@@ -3,6 +3,8 @@ export { getComparisons, deleteComparison, deleteComparisons, createComparison }
 export { getModels } from './models';
 export { getStatuses } from './statuses';
 export { getStats } from './stats';
+export { getProviders, saveApiKey, deleteApiKey } from './settings';
 export * from './types';
 export type { Provider, GetModelsResponse } from './models';
 export type { CreateComparisonRequest, CreateComparisonResponse } from './comparisons';
+export type { ProviderApiKey, GetProvidersResponse, SaveApiKeyRequest, SaveApiKeyResponse, DeleteApiKeyResponse } from './settings';
