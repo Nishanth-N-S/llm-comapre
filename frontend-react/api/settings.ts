@@ -41,3 +41,28 @@ export const deleteApiKey = async (provider: string): Promise<DeleteApiKeyRespon
   const response = await apiClient.delete<DeleteApiKeyResponse>(`/settings/providers/${provider}/key`);
   return response.data;
 };
+
+export interface OpenRouterSettingsResponse {
+  useOpenRouter: boolean;
+  apiKey: string | null;
+}
+
+export interface UpdateOpenRouterSettingsRequest {
+  useOpenRouter: boolean;
+  apiKey: string | null;
+}
+
+export interface UpdateOpenRouterSettingsResponse {
+  success: boolean;
+  message: string;
+}
+
+export const getOpenRouterSettings = async (): Promise<OpenRouterSettingsResponse> => {
+  const response = await apiClient.get<OpenRouterSettingsResponse>('/settings/openrouter');
+  return response.data;
+};
+
+export const updateOpenRouterSettings = async (data: UpdateOpenRouterSettingsRequest): Promise<UpdateOpenRouterSettingsResponse> => {
+  const response = await apiClient.put<UpdateOpenRouterSettingsResponse>('/settings/openrouter', data);
+  return response.data;
+};
