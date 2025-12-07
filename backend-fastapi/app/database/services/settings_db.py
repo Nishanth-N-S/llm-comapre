@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
-from app.database.models import MasterProvider, ProviderApiKey, OpenRouterSettings
+from app.database.models import MasterProvider, ProviderApiKey
 from typing import List, Dict, Optional
 
 async def get_all_providers_with_keys(db: AsyncSession) -> List[Dict]:
@@ -55,32 +55,4 @@ async def delete_provider_api_key(db: AsyncSession, provider_name: str) -> bool:
         )
         await db.commit()
     
-    return True
-
-async def get_openrouter_settings(db: AsyncSession) -> Dict:
-    result = await db.execute(select(OpenRouterSettings).limit(1))
-    settings = result.scalar_one_or_none()
-    if settings:
-        return {
-            "useOpenRouter": bool(settings.use_openrouter),
-            "apiKey": settings.api_key
-        }
-    return {"useOpenRouter": False, "apiKey": None}
-
-async def update_openrouter_settings(db: AsyncSession, use_openrouter: bool, api_key: Optional[str] = None) -> bool:
-    result = await db.execute(select(OpenRouterSettings).limit(1))
-    settings = result.scalar_one_or_none()
-    
-    if settings:
-        settings.use_openrouter = 1 if use_openrouter else 0
-        if api_key is not None:
-            settings.api_key = api_key
-    else:
-        new_settings = OpenRouterSettings(
-            use_openrouter=1 if use_openrouter else 0,
-            api_key=api_key
-        )
-        db.add(new_settings)
-    
-    await db.commit()
     return True

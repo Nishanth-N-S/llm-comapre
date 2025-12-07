@@ -6,17 +6,12 @@ from app.schemas.settings import (
     ProviderApiKey,
     SaveApiKeyRequest,
     SaveApiKeyResponse,
-    DeleteApiKeyResponse,
-    OpenRouterSettingsResponse,
-    UpdateOpenRouterSettingsRequest,
-    UpdateOpenRouterSettingsResponse
+    DeleteApiKeyResponse
 )
 from app.database.services.settings_db import (
     get_all_providers_with_keys,
     update_provider_api_key,
-    delete_provider_api_key,
-    get_openrouter_settings,
-    update_openrouter_settings
+    delete_provider_api_key
 )
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -40,13 +35,3 @@ async def delete_api_key(provider: str, db: AsyncSession = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail=f"Provider '{provider}' not found")
     return DeleteApiKeyResponse(success=True, message=f"API key for {provider} deleted successfully")
-
-@router.get("/openrouter", response_model=OpenRouterSettingsResponse)
-async def get_openrouter_settings_endpoint(db: AsyncSession = Depends(get_db)):
-    settings = await get_openrouter_settings(db)
-    return OpenRouterSettingsResponse(**settings)
-
-@router.put("/openrouter", response_model=UpdateOpenRouterSettingsResponse)
-async def update_openrouter_settings_endpoint(request: UpdateOpenRouterSettingsRequest, db: AsyncSession = Depends(get_db)):
-    await update_openrouter_settings(db, request.useOpenRouter, request.apiKey)
-    return UpdateOpenRouterSettingsResponse(success=True, message="OpenRouter settings updated successfully")
