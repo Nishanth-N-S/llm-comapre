@@ -2,64 +2,118 @@
 import React from 'react';
 import ResultsHeader from '../features/results/ResultsHeader';
 import PromptUsed from '../features/results/PromptUsed';
-import LLMResultList, { LLMResult } from '../features/results/LLMResult/LLMResultList';
+import ModelOutputTable from '../features/results/ModelOutputTable';
+import CriteriaScores from '../features/results/CriteriaScores';
+
+// New type definitions matching backend response
+export interface CriteriaScore {
+  criteria: string;
+  score: number;
+  pros: string;
+  cons: string;
+}
+
+export interface ModelResult {
+  model: string;
+  response?: string;
+  error?: string;
+  scores?: CriteriaScore[];
+}
+
+export interface ComparisonData {
+  title: string;
+  runDate: string;
+  userPrompt: string;
+  systemPrompt?: string;
+  results: ModelResult[];
+}
 
 interface ComparisonResultsProps {
   onBack: () => void;
+  comparisonData?: ComparisonData | null;
 }
 
-const ComparisonResults: React.FC<ComparisonResultsProps> = ({ onBack }) => {
-  const comparisonData = {
+const ComparisonResults: React.FC<ComparisonResultsProps> = ({ onBack, comparisonData: propComparisonData }) => {
+  // Use provided data or fallback to mock data
+  const comparisonData: ComparisonData = propComparisonData || {
     title: 'E-commerce Product Descriptions',
     runDate: 'Run on July 26, 2024 at 10:45 AM',
     userPrompt: 'Write a product description for a smart coffee mug.',
-    systemPrompts: [
-      { model: 'GPT-4o', prompt: 'You are a witty and concise copywriter.' },
-      { model: 'Claude 3', prompt: 'You are a professional and detailed technical writer.' },
-    ],
+    systemPrompt: 'You are a creative copywriter who writes engaging product descriptions.',
     results: [
       {
-        modelName: 'GPT-4o',
-        modelLogo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR3GRHZlYTg4WZaCsYwz7rjTaYUxRlHrfVWmEGNAuDtP7jcLhhJAZBcFXexTdse4guP4lEhvbK25vq2vfH86dutgEm3_oZRUJOGyAE25heDLIM5herKsrbOKg04AM09MzE9YoYyVqivZOKXjDQIZ8YdK_lLtdawYSBrHXmN2uTFCOLzDDTlOxBE116I0UmwZ1qIAmGttHz6i_Df6AFNtI-zeEqfJAHB_rd-VS10T5Cn1wXM4OKjgUMdPwiNWlYHeeLUKJdCVpK7DU',
-        score: 92,
-        rating: 'Excellent',
-        ratingColor: 'green' as const,
-        rationale: [
-          "Excellent adherence to the 'witty and concise' persona.",
-          'Strong persuasive language that highlights key benefits.',
-          'Clear, readable, and well-structured output.',
-        ],
-        output: "Meet the Ember Mug²: Your coffee's new best friend. Say goodbye to lukewarm letdowns and microwave do-overs. This mug keeps your brew at the perfect temperature from the first sip to the last drop. Too hot? Too cold? Just right. Every. Single. Time. Control it with your phone, and never suffer a bad sip again. Welcome to the future of coffee. It's hot.",
+        model: 'GPT-4o',
+        response: "Meet the Ember Mug²: Your coffee's new best friend. Say goodbye to lukewarm letdowns and microwave do-overs. This mug keeps your brew at the perfect temperature from the first sip to the last drop. Too hot? Too cold? Just right. Every. Single. Time. Control it with your phone, and never suffer a bad sip again. Welcome to the future of coffee. It's hot.",
+        scores: [
+          {
+            criteria: 'Creativity',
+            score: 9.2,
+            pros: 'Witty and engaging tone, memorable phrases',
+            cons: 'Could be slightly more informative'
+          },
+          {
+            criteria: 'Clarity',
+            score: 8.8,
+            pros: 'Clear benefits, easy to understand',
+            cons: 'Some features are implied rather than explicit'
+          },
+          {
+            criteria: 'Relevance',
+            score: 9.5,
+            pros: 'Directly addresses product benefits',
+            cons: 'None noted'
+          }
+        ]
       },
       {
-        modelName: 'Claude 3 Sonnet',
-        modelLogo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBsZU8co9Ce1teczQIWD0YGXMsjIyBlQGhub3GuE07KQwf3lBTQ4dzBiI0Im7kI7XX5WhRpokrjRxi0tKtv9kXBUdW4SsRtFpWnVOkp1TwwZlgiUvK1FDLvr3Hgsc9b8L3T0-cIHRS1wdQbuGvN4X8MIWgszesdtwayr1NJIeSyW3dC5ZZ6V6tczeP7RZNrQetS7Auw1FVnkgnDpavU3RrVoAl2nzzs3uJNv24cGBs_u8EQUfw98cl4yKg_JUvHfDMSWjdM62pRLAY',
-        modelLogoStyle: { backgroundColor: '#D0BFFF' },
-        score: 81,
-        rating: 'Good',
-        ratingColor: 'yellow' as const,
-        rationale: [
-          'Successfully adopted a professional, technical tone.',
-          'Content is detailed and accurate but slightly dry.',
-          'Could be more engaging for a consumer-facing product.',
-        ],
-        output: 'The SmartTemp Coffee Mug is an intelligent beverage container engineered for optimal temperature maintenance. It features a durable ceramic-coated stainless steel construction and an integrated heating element. Users can set a precise drinking temperature between 120°F (50°C) and 145°F (62.5°C) via the companion smartphone application. The onboard battery provides up to 1.5 hours of continuous heating, or all-day use with the included charging coaster. An LED indicator displays the current temperature status and battery level.',
+        model: 'Claude 3 Sonnet',
+        response: 'The SmartTemp Coffee Mug is an intelligent beverage container engineered for optimal temperature maintenance. It features a durable ceramic-coated stainless steel construction and an integrated heating element. Users can set a precise drinking temperature between 120°F (50°C) and 145°F (62.5°C) via the companion smartphone application. The onboard battery provides up to 1.5 hours of continuous heating, or all-day use with the included charging coaster. An LED indicator displays the current temperature status and battery level.',
+        scores: [
+          {
+            criteria: 'Creativity',
+            score: 7.5,
+            pros: 'Professional and detailed',
+            cons: 'Lacks engaging language'
+          },
+          {
+            criteria: 'Clarity',
+            score: 9.0,
+            pros: 'Very clear and specific details',
+            cons: 'Might be too technical for some audiences'
+          },
+          {
+            criteria: 'Relevance',
+            score: 8.8,
+            pros: 'Covers all technical features',
+            cons: 'Could emphasize benefits more'
+          }
+        ]
       },
       {
-        modelName: 'Llama 3 70B',
-        modelLogo: '<svg className="h-6 w-6 text-blue-800" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"></path></svg>',
-        modelLogoStyle: { backgroundColor: '#BFDBFE' },
-        score: 65,
-        rating: 'Needs Improvement',
-        ratingColor: 'red' as const,
-        rationale: [
-          'Tone is generic and lacks a distinct persona.',
-          'Output reads like a list of features, not a description.',
-          'Grammatically correct but fails to be persuasive.',
-        ],
-        output: 'This is a smart coffee mug. It can keep your drink warm. You can choose the temperature you want with an app on your phone. The mug is made of good materials and has a battery. The battery lasts for a while. You can also put it on its special coaster to keep it charged all day. It is a good product for people who like to drink coffee or tea.',
-      },
-    ] as LLMResult[],
+        model: 'Llama 3 70B',
+        response: 'This is a smart coffee mug. It can keep your drink warm. You can choose the temperature you want with an app on your phone. The mug is made of good materials and has a battery. The battery lasts for a while. You can also put it on its special coaster to keep it charged all day. It is a good product for people who like to drink coffee or tea.',
+        scores: [
+          {
+            criteria: 'Creativity',
+            score: 5.5,
+            pros: 'Simple and straightforward',
+            cons: 'Generic and unengaging tone'
+          },
+          {
+            criteria: 'Clarity',
+            score: 7.0,
+            pros: 'Easy to understand',
+            cons: 'Lacks specific details'
+          },
+          {
+            criteria: 'Relevance',
+            score: 6.8,
+            pros: 'Mentions key features',
+            cons: 'Vague descriptions'
+          }
+        ]
+      }
+    ]
   };
 
   const handleExport = () => {
@@ -88,12 +142,12 @@ const ComparisonResults: React.FC<ComparisonResultsProps> = ({ onBack }) => {
 
         <PromptUsed
           userPrompt={comparisonData.userPrompt}
-          systemPrompts={comparisonData.systemPrompts}
+          systemPrompt={comparisonData.systemPrompt}
         />
 
-        <div className="mt-6">
-          <LLMResultList results={comparisonData.results} />
-        </div>
+        <ModelOutputTable results={comparisonData.results} />
+
+        <CriteriaScores results={comparisonData.results} />
       </main>
     </div>
   );

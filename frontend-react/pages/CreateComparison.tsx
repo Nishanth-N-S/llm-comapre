@@ -9,7 +9,7 @@ import { createComparison } from '../api';
 interface CreateComparisonProps {
   onCancel: () => void;
   onSaveDraft: () => void;
-  onRun: () => void;
+  onRun: (comparisonData: any) => void;
 }
 
 const CreateComparison: React.FC<CreateComparisonProps> = ({ onCancel, onSaveDraft, onRun }) => {
@@ -19,6 +19,7 @@ const CreateComparison: React.FC<CreateComparisonProps> = ({ onCancel, onSaveDra
   const [userPrompt, setUserPrompt] = useState('');
   const [criteria, setCriteria] = useState<string[]>(['Clarity', 'Conciseness', 'Code Quality']);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [evaluationModel, setEvaluationModel] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -49,10 +50,20 @@ const CreateComparison: React.FC<CreateComparisonProps> = ({ onCancel, onSaveDra
         userPrompt,
         models: selectedModels,
         criteria,
+        evaluationModel,
       });
 
       console.log('Comparison created:', response);
-      onRun();
+      
+      // Pass the comparison data to the results page
+      onRun({
+        title: name,
+        runDate: `Run on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+        userPrompt: response.userPrompt || userPrompt,
+        systemPrompt: response.systemPrompt || systemPrompt,
+        results: response.results || [],
+        comparisonId: response.comparisonId
+      });
     } catch (error) {
       console.error('Error creating comparison:', error);
       setSubmitError('Failed to create comparison. Please try again.');
@@ -100,6 +111,8 @@ const CreateComparison: React.FC<CreateComparisonProps> = ({ onCancel, onSaveDra
             <Evaluation 
               criteria={criteria}
               onCriteriaChange={setCriteria}
+              evaluationModel={evaluationModel}
+              onEvaluationModelChange={setEvaluationModel}
             />
 
             {submitError && (

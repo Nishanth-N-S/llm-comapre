@@ -56,12 +56,30 @@ export interface CreateComparisonRequest {
   userPrompt: string;
   models: string[];
   criteria: string[];
+  evaluationModel: string;
+}
+
+export interface CriteriaScore {
+  criteria: string;
+  score: number;
+  pros: string;
+  cons: string;
+}
+
+export interface ModelResult {
+  model: string;
+  response?: string;
+  error?: string;
+  scores?: CriteriaScore[];
 }
 
 export interface CreateComparisonResponse {
   success: boolean;
   comparisonId: string;
   message: string;
+  results?: ModelResult[];
+  userPrompt?: string;
+  systemPrompt?: string;
 }
 
 export const createComparison = async (
