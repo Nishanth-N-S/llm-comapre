@@ -37,6 +37,13 @@ class ProviderApiKey(Base, AuditMixin):
     api_key = Column(String(500), nullable=False)
     provider = relationship("MasterProvider", back_populates="api_key_record")
 
+class OpenRouterSettings(Base, AuditMixin):
+    __tablename__ = "openrouter_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    use_openrouter = Column(Integer, nullable=False, default=0)
+    api_key = Column(String(500), nullable=True)
+
 class MasterModel(Base, AuditMixin):
     __tablename__ = "master_models"
     

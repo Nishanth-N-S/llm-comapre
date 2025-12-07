@@ -24,7 +24,9 @@ from agents.openai_agent import OpenAIAgent
 from agents.anthropic_agent import AnthropicAgent
 from agents.google_agent import GoogleAgent
 from agents.ollama_agent import OllamaAgent
+from agents.openrouter_agent import OpenRouterAgent
 from agents.evaluator import Evaluator
+from app.database.services.settings_db import get_openrouter_settings
 from typing import Optional, List
 import math
 import json
@@ -54,6 +56,9 @@ async def create_comparison_endpoint(
     try:
         model_responses = []
 
+        openrouter_settings = await get_openrouter_settings(db)
+        openrouter_api_key = openrouter_settings.get("apiKey")
+
         models_to_run = []
         for model_name in request.models:
             model_obj = await get_model_by_name(db, model_name)
@@ -67,7 +72,11 @@ async def create_comparison_endpoint(
 
         async def run_model(model_name: str, provider_name: str):
             logger.info(f"Starting invocation for model {model_name} with provider {provider_name}")
-            if provider_name == "OpenAI":
+            if provider_name.lower() == "open_router":
+                if not openrouter_api_key:
+                    return {"model": model_name, "error": "OpenRouter API key not configured"}
+                agent = OpenRouterAgent(model_name, openrouter_api_key)
+            elif provider_name == "OpenAI":
                 agent = OpenAIAgent(model_name)
             elif provider_name == "Anthropic":
                 agent = AnthropicAgent(model_name)
@@ -76,7 +85,7 @@ async def create_comparison_endpoint(
             elif provider_name == "Ollama":
                 agent = OllamaAgent(model_name)
             else:
-                return ModelResult(model=model_name, error=f"Unsupported provider: {provider_name}")
+                return {"model": model_name, "error": f"Unsupported provider: {provider_name}"}
 
             try:
                 resp = await agent.invoke(request.systemPrompt, request.userPrompt)
@@ -103,7 +112,7 @@ async def create_comparison_endpoint(
             logger.warning("No tasks to run - models_to_run was empty")
 
         if request.evaluationModel and request.criteria:
-            evaluator = await Evaluator.create(db, request.evaluationModel)
+            evaluator = await Evaluator.create(db, request.evaluationModel, openrouter_api_key)
             
             try:
                 evaluation_results = await evaluator.evaluate_all(

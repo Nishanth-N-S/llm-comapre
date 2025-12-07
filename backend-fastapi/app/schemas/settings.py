@@ -20,3 +20,15 @@ class SaveApiKeyResponse(BaseModel):
 class DeleteApiKeyResponse(BaseModel):
     success: bool
     message: str
+
+class OpenRouterSettingsResponse(BaseModel):
+    useOpenRouter: bool
+    apiKey: Optional[str] = None
+
+class UpdateOpenRouterSettingsRequest(BaseModel):
+    useOpenRouter: bool
+    apiKey: Optional[str] = None
+
+class UpdateOpenRouterSettingsResponse(BaseModel):
+    success: bool
+    message: str
