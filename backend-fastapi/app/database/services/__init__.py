@@ -4,7 +4,8 @@ from .comparisons_db import (
     update_comparison_results,
     delete_comparison_from_db,
     batch_delete_comparisons_from_db,
-    get_model_by_name
+    get_model_by_name,
+    get_model_by_name_and_provider
 )
 from .models_db import get_all_providers_with_models
 from .stats_db import get_comparison_stats
@@ -22,6 +23,7 @@ __all__ = [
     "delete_comparison_from_db",
     "batch_delete_comparisons_from_db",
     "get_model_by_name",
+    "get_model_by_name_and_provider",
     "get_all_providers_with_models",
     "get_comparison_stats",
     "get_all_statuses",

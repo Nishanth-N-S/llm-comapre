@@ -1,9 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import selectinload
-from app.database.models import Comparison, MasterStatus, MasterModel
+from app.database.models import Comparison, MasterStatus, MasterModel, MasterProvider
 from typing import List, Optional
 import math
+import json
 
 async def get_comparisons_from_db(
     db: AsyncSession,
@@ -39,7 +40,7 @@ async def create_comparison_in_db(
     description: str,
     system_prompt: str,
     user_prompt: str,
-    models: List[str],
+    models: List[dict],
     criteria: List[str],
     status_name: str = "Running"
 ) -> Comparison:
@@ -47,13 +48,16 @@ async def create_comparison_in_db(
     status_result = await db.execute(select(MasterStatus).where(MasterStatus.name == status_name))
     status_obj = status_result.scalar_one()
     
+    # Convert models list of dicts to list of JSON strings
+    models_json_strings = [json.dumps(model) for model in models]
+    
     comparison = Comparison(
         name=name,
         description=description,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         status_id=status_obj.id,
-        models=models,
+        models=models_json_strings,
         criteria=criteria,
         results=None
     )
@@ -106,5 +110,15 @@ async def get_model_by_name(db: AsyncSession, model_name: str) -> Optional[Maste
         select(MasterModel)
         .options(selectinload(MasterModel.provider))
         .where(MasterModel.name == model_name)
+    )
+    return result.scalar_one_or_none()
+
+async def get_model_by_name_and_provider(db: AsyncSession, model_name: str, provider_name: str) -> Optional[MasterModel]:
+    """Get model by name and provider from database."""
+    result = await db.execute(
+        select(MasterModel)
+        .join(MasterModel.provider)
+        .where(MasterModel.name == model_name)
+        .where(MasterProvider.name == provider_name)
     )
     return result.scalar_one_or_none()

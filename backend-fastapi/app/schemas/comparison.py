@@ -24,12 +24,16 @@ class ComparisonResponse(ComparisonBase):
     class Config:
         from_attributes = True
 
+class ModelSelection(BaseModel):
+    model: str
+    provider: str
+
 class CreateComparisonRequest(BaseModel):
     name: str
     description: str
     systemPrompt: str
     userPrompt: str
-    models: List[str]
+    models: List[ModelSelection]
     criteria: List[str]
     evaluationModel: Optional[str] = None
 

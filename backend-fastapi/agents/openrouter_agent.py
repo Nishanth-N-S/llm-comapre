@@ -1,16 +1,15 @@
-import logging
 from agents.base import BaseAgent
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from typing import Dict, Optional
 
-class GoogleAgent(BaseAgent):
+class OpenRouterAgent(BaseAgent):
     def __init__(self, model: str, api_key: Optional[str] = None):
         self.model = model
-        print("GoogleAgent initialized with model: %s, API Key: %s" % (model, api_key))
-        self.llm = ChatGoogleGenerativeAI(
+        self.llm = ChatOpenAI(
             model=model,
-            google_api_key=api_key
+            api_key=api_key,
+            base_url="https://openrouter.ai/api/v1"
         )
     
     async def invoke(self, system_prompt: str, user_prompt: str) -> Dict[str, str]:

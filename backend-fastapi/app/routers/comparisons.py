@@ -18,12 +18,14 @@ from app.database.services import (
     update_comparison_results,
     delete_comparison_from_db,
     batch_delete_comparisons_from_db,
-    get_model_by_name
+    get_model_by_name_and_provider
 )
+from app.database.services.models_db import get_provider_api_key
 from agents.openai_agent import OpenAIAgent
 from agents.anthropic_agent import AnthropicAgent
 from agents.google_agent import GoogleAgent
 from agents.ollama_agent import OllamaAgent
+from agents.openrouter_agent import OpenRouterAgent
 from agents.evaluator import Evaluator
 from typing import Optional, List
 import math
@@ -40,13 +42,16 @@ async def create_comparison_endpoint(
     request: CreateComparisonRequest,
     db: AsyncSession = Depends(get_db)
 ):
+    # Convert ModelSelection objects to list of dicts for database storage
+    models_list = [{"model": m.model, "provider": m.provider} for m in request.models]
+    
     comparison = await create_comparison_in_db(
         db=db,
         name=request.name,
         description=request.description,
         system_prompt=request.systemPrompt,
         user_prompt=request.userPrompt,
-        models=request.models,
+        models=models_list,
         criteria=request.criteria,
         status_name="Running"
     )
@@ -55,28 +60,40 @@ async def create_comparison_endpoint(
         model_responses = []
 
         models_to_run = []
-        for model_name in request.models:
-            model_obj = await get_model_by_name(db, model_name)
+        for model_selection in request.models:
+            model_name = model_selection.model
+            provider_name = model_selection.provider
+            
+            model_obj = await get_model_by_name_and_provider(db, model_name, provider_name)
             if not model_obj:
-                logger.warning(f"Model not found in database: {model_name}")
-                model_responses.append(ModelResult(model=model_name, error=f"Model not found: {model_name}"))
+                logger.warning(f"Model not found in database: {model_name} (provider: {provider_name})")
+                model_responses.append(ModelResult(model=model_name, error=f"Model not found: {model_name} with provider {provider_name}"))
                 continue
-            provider_name = model_obj.provider.name
+            
             logger.info(f"Found model {model_name} with provider {provider_name}")
             models_to_run.append((model_name, provider_name))
 
         async def run_model(model_name: str, provider_name: str):
             logger.info(f"Starting invocation for model {model_name} with provider {provider_name}")
+            
+            # Fetch API key from database
+            api_key = await get_provider_api_key(db, provider_name)
+            if not api_key:
+                logger.error(f"No API key found for provider: {provider_name}")
+                return {"model": model_name, "error": f"No API key configured for provider: {provider_name}"}
+            
             if provider_name == "OpenAI":
-                agent = OpenAIAgent(model_name)
+                agent = OpenAIAgent(model_name, api_key)
             elif provider_name == "Anthropic":
-                agent = AnthropicAgent(model_name)
+                agent = AnthropicAgent(model_name, api_key)
             elif provider_name == "Google":
-                agent = GoogleAgent(model_name)
+                agent = GoogleAgent(model_name, api_key)
             elif provider_name == "Ollama":
-                agent = OllamaAgent(model_name)
+                agent = OllamaAgent(model_name, api_key)  # For Ollama, api_key is the URL
+            elif provider_name == "OpenRouter":
+                agent = OpenRouterAgent(model_name, api_key)
             else:
-                return ModelResult(model=model_name, error=f"Unsupported provider: {provider_name}")
+                return {"model": model_name, "error": f"Unsupported provider: {provider_name}"}
 
             try:
                 resp = await agent.invoke(request.systemPrompt, request.userPrompt)

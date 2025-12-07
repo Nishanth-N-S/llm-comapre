@@ -27,25 +27,30 @@ class EvaluationResponse(BaseModel):
     evaluations: List[ModelEvaluation]
 
 class Evaluator:
-    def __init__(self, model: str, provider: str):
+    def __init__(self, model: str, provider: str, api_key: str):
         self.model = model
         self.provider = provider
-        self.llm = self._get_llm(model, provider)
+        self.api_key = api_key
+        self.llm = self._get_llm(model, provider, api_key)
     
-    def _get_llm(self, model: str, provider: str):
+    def _get_llm(self, model: str, provider: str, api_key: str):
         if provider == "OpenAI":
-            return ChatOpenAI(model=model, api_key=os.getenv("OPENAI_API_KEY"))
+            return ChatOpenAI(model=model, api_key=api_key)
         elif provider == "Anthropic":
-            return ChatAnthropic(model=model, api_key=os.getenv("ANTHROPIC_API_KEY"))
+            return ChatAnthropic(model=model, api_key=api_key)
         elif provider == "Google":
-            return ChatGoogleGenerativeAI(model=model, google_api_key=config.settings.GOOGLE_API_KEY)
+            return ChatGoogleGenerativeAI(model=model, google_api_key=api_key)
         elif provider == "Ollama":
-            return ChatOllama(model=model)
+            return ChatOllama(model=model, base_url=api_key)  # For Ollama, api_key is the URL
+        elif provider == "OpenRouter":
+            return ChatOpenAI(model=model, api_key=api_key, base_url="https://openrouter.ai/api/v1")
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     
     @staticmethod
     async def create(db: AsyncSession, model_name: str) -> "Evaluator":
+        from app.database.services.models_db import get_provider_api_key
+        
         result = await db.execute(
             select(MasterModel)
             .options(selectinload(MasterModel.provider))
@@ -54,7 +59,13 @@ class Evaluator:
         model_obj = result.scalar_one_or_none()
         if not model_obj:
             raise ValueError(f"Model not found: {model_name}")
-        return Evaluator(model_name, model_obj.provider.name)
+        
+        provider_name = model_obj.provider.name
+        api_key = await get_provider_api_key(db, provider_name)
+        if not api_key:
+            raise ValueError(f"No API key configured for provider: {provider_name}")
+        
+        return Evaluator(model_name, provider_name, api_key)
     
     async def evaluate_all(self, system_prompt: str, user_prompt: str, model_responses: List[dict], criteria: List[str]) -> Dict[str, List[dict]]:
         criteria_list = "\n".join([f"- {c}" for c in criteria])

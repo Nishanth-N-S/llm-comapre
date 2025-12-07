@@ -1,15 +1,14 @@
-import os
 from agents.base import BaseAgent
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
-from typing import Dict
+from typing import Dict, Optional
 
 class AnthropicAgent(BaseAgent):
-    def __init__(self, model: str):
+    def __init__(self, model: str, api_key: Optional[str] = None):
         self.model = model
         self.llm = ChatAnthropic(
             model=model,
-            api_key=os.getenv("ANTHROPIC_API_KEY")
+            api_key=api_key
         )
     
     async def invoke(self, system_prompt: str, user_prompt: str) -> Dict[str, str]:

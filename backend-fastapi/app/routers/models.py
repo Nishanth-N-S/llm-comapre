@@ -15,6 +15,7 @@ async def get_models_endpoint(db: AsyncSession = Depends(get_db)):
         Provider(
             id=p["id"],
             name=p["name"],
+            auth_type=p["auth_type"],
             models=p["models"]
         )
         for p in provider_data
