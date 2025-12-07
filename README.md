@@ -138,6 +138,7 @@ make stop      # Stop all services
 make restart   # Restart all services
 make logs      # View logs from all services
 make clean     # Remove all containers and database data
+make uninstall # Complete uninstall (removes everything)
 ```
 
 Both methods will automatically create `.env` from `.env.example` if it doesn't exist, so you can use either one right away.
@@ -252,9 +253,28 @@ The database and configuration will be recreated with defaults.
 
 ## Uninstalling
 
-To completely remove the application:
-1. Stop all containers: `make stop`
-2. Remove Docker images: `docker-compose down --rmi all`
-3. Delete the project folder
+To completely remove the application, use the uninstall script:
 
-All data and Docker artifacts will be removed from your system.
+**On Windows:**
+```bash
+uninstall.bat
+```
+
+**On Linux/Mac:**
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
+```
+
+**Or using Make:**
+```bash
+make uninstall
+```
+
+The uninstall process will:
+- Stop and remove all Docker containers
+- Remove all Docker images
+- Delete the database data (`postgres_data` folder)
+- Delete your configuration (`.env` file)
+
+After uninstalling, you can safely delete the project folder. All data and Docker artifacts will be removed from your system.

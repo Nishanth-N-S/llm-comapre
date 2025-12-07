@@ -1,4 +1,4 @@
-.PHONY: run stop clean logs restart
+.PHONY: run stop clean logs restart uninstall
 
 run:
 	@if not exist .env copy .env.example .env
@@ -16,3 +16,10 @@ logs:
 
 restart:
 	docker-compose restart
+
+uninstall:
+	docker-compose down
+	docker-compose down --rmi all
+	rm -rf postgres_data
+	rm -f .env
+	@echo "Uninstall complete! You can now delete this project folder."
