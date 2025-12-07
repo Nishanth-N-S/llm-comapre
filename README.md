@@ -12,7 +12,7 @@ A self-contained application for comparing outputs from different Large Language
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd llm-compare-frontend
+   cd llm-fcomapre
    ```
 
 2. **Configure (Optional)**
@@ -156,7 +156,7 @@ docker-compose down -v       # Remove containers and volumes
 ## Project Structure
 
 ```
-llm-compare-frontend/
+llm-fcomapre/
 ├── backend-fastapi/         # FastAPI backend
 │   ├── app/                 # Application code
 │   ├── agents/              # LLM agent implementations
