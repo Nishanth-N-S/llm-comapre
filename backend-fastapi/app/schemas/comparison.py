@@ -31,12 +31,25 @@ class CreateComparisonRequest(BaseModel):
     userPrompt: str
     models: List[str]
     criteria: List[str]
+    evaluationModel: Optional[str] = None
+
+class CriteriaScore(BaseModel):
+    criteria: str
+    score: float
+    pros: str
+    cons: str
+
+class ModelResult(BaseModel):
+    model: str
+    response: Optional[str] = None
+    error: Optional[str] = None
+    scores: Optional[List[CriteriaScore]] = None
 
 class CreateComparisonResponse(BaseModel):
     success: bool
     comparisonId: str
     message: str
-    results: Optional[List[dict]] = None
+    results: Optional[List[ModelResult]] = None
 
 class PaginationMeta(BaseModel):
     currentPage: int

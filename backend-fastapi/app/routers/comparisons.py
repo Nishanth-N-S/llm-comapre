@@ -8,7 +8,9 @@ from app.schemas.comparison import (
     CreateComparisonRequest,
     CreateComparisonResponse,
     ComparisonResponse,
-    PaginationMeta
+    PaginationMeta,
+    ModelResult,
+    CriteriaScore
 )
 from app.database.services import (
     get_comparisons_from_db,
@@ -22,6 +24,7 @@ from agents.openai_agent import OpenAIAgent
 from agents.anthropic_agent import AnthropicAgent
 from agents.google_agent import GoogleAgent
 from agents.ollama_agent import OllamaAgent
+from agents.evaluator import Evaluator
 from typing import Optional, List
 import math
 import json
@@ -37,7 +40,6 @@ async def create_comparison_endpoint(
     request: CreateComparisonRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new comparison and execute it with all specified models."""
     comparison = await create_comparison_in_db(
         db=db,
         name=request.name,
@@ -57,7 +59,7 @@ async def create_comparison_endpoint(
             model_obj = await get_model_by_name(db, model_name)
             if not model_obj:
                 logger.warning(f"Model not found in database: {model_name}")
-                model_responses.append({"model": model_name, "error": f"Model not found: {model_name}"})
+                model_responses.append(ModelResult(model=model_name, error=f"Model not found: {model_name}"))
                 continue
             provider_name = model_obj.provider.name
             logger.info(f"Found model {model_name} with provider {provider_name}")
@@ -74,18 +76,19 @@ async def create_comparison_endpoint(
             elif provider_name == "Ollama":
                 agent = OllamaAgent(model_name)
             else:
-                return {"model": model_name, "error": f"Unsupported provider: {provider_name}"}
+                return ModelResult(model=model_name, error=f"Unsupported provider: {provider_name}")
 
             try:
                 resp = await agent.invoke(request.systemPrompt, request.userPrompt)
                 logger.info(f"Completed invocation for model {model_name}")
-                return {"model": model_name, "response": resp}
+                return {"model": model_name, "response": resp.get("response", "")}
             except Exception as exc:
                 logger.error(f"Error invoking model {model_name}: {exc}")
                 return {"model": model_name, "error": str(exc)}
 
         logger.info(f"Creating {len(models_to_run)} tasks for models: {[m[0] for m in models_to_run]}")
         tasks = [asyncio.create_task(run_model(mn, pn)) for mn, pn in models_to_run]
+        raw_results = []
         if tasks:
             logger.info(f"Waiting for {len(tasks)} tasks to complete...")
             gathered = await asyncio.gather(*tasks, return_exceptions=True)
@@ -93,16 +96,47 @@ async def create_comparison_endpoint(
             for i, result in enumerate(gathered):
                 if isinstance(result, Exception):
                     model_name = models_to_run[i][0]
-                    model_responses.append({"model": model_name, "error": str(result)})
+                    raw_results.append({"model": model_name, "error": str(result)})
                 else:
-                    model_responses.append(result)
+                    raw_results.append(result)
         else:
             logger.warning("No tasks to run - models_to_run was empty")
+
+        if request.evaluationModel and request.criteria:
+            evaluator = await Evaluator.create(db, request.evaluationModel)
+            
+            try:
+                evaluation_results = await evaluator.evaluate_all(
+                    request.systemPrompt,
+                    request.userPrompt,
+                    raw_results,
+                    request.criteria
+                )
+                
+                for result in raw_results:
+                    model_name = result["model"]
+                    if "error" in result and result["error"]:
+                        model_responses.append(ModelResult(model=model_name, error=result["error"]))
+                    else:
+                        scores_data = evaluation_results.get(model_name, [])
+                        criteria_scores = [CriteriaScore(criteria=s["criteria"], score=round(s["pros_score"] + s["cons_score"], 2), pros=s["pros_reason"], cons=s["cons_reason"]) for s in scores_data]
+                        model_responses.append(ModelResult(model=model_name, response=result["response"], scores=criteria_scores))
+            except Exception as exc:
+                logger.error(f"Error during evaluation: {exc}")
+                model_responses = [
+                    ModelResult(model=r["model"], response=r.get("response"), error=r.get("error"))
+                    for r in raw_results
+                ]
+        else:
+            model_responses = [
+                ModelResult(model=r["model"], response=r.get("response"), error=r.get("error"))
+                for r in raw_results
+            ]
 
         await update_comparison_results(
             db=db,
             comparison_id=comparison.id,
-            results=json.dumps(model_responses),
+            results=json.dumps([r.model_dump() for r in model_responses]),
             status_name="Completed"
         )
         
@@ -110,7 +144,7 @@ async def create_comparison_endpoint(
             success=True,
             comparisonId=str(comparison.id),
             message="Comparison created successfully",
-            results=model_responses
+            results=list(model_responses)
         )
     except Exception as e:
         await update_comparison_results(
