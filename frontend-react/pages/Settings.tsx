@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import SettingsSidebar from '../features/settings/SettingsSidebar/SettingsSidebar';
 import ApiKeysTab from '../features/settings/ApiKeysTab/ApiKeysTab';
-import { getProviders, saveApiKey, deleteApiKey, ProviderApiKey, getOpenRouterSettings, updateOpenRouterSettings } from '../api';
+import { getProviders, saveApiKey, deleteApiKey, ProviderApiKey } from '../api';
 
 type Tab = 'api-keys' | 'evaluation';
 
@@ -14,26 +14,14 @@ const Settings: React.FC = () => {
   const [showKey, setShowKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [useOpenRouter, setUseOpenRouter] = useState(false);
-  const [originalUseOpenRouter, setOriginalUseOpenRouter] = useState(false);
 
   const fetchProviders = useCallback(async () => {
     setLoading(true);
     try {
-      const [providersResponse, openRouterResponse] = await Promise.all([
-        getProviders(),
-        getOpenRouterSettings()
-      ]);
-      setProviders(providersResponse.providers);
-      setUseOpenRouter(openRouterResponse.useOpenRouter);
-      setOriginalUseOpenRouter(openRouterResponse.useOpenRouter);
-      
-      if (openRouterResponse.useOpenRouter) {
-        setSelectedProvider('openrouter');
-        setApiKey(openRouterResponse.apiKey || '');
-        setOriginalApiKey(openRouterResponse.apiKey || '');
-      } else if (providersResponse.providers.length > 0 && !selectedProvider) {
-        const first = providersResponse.providers[0];
+      const response = await getProviders();
+      setProviders(response.providers);
+      if (response.providers.length > 0 && !selectedProvider) {
+        const first = response.providers[0];
         setSelectedProvider(first.provider);
         setApiKey(first.apiKey || '');
         setOriginalApiKey(first.apiKey || '');
@@ -51,9 +39,6 @@ const Settings: React.FC = () => {
 
   const handleProviderChange = (provider: string) => {
     setSelectedProvider(provider);
-    if (provider === 'openrouter') {
-      return;
-    }
     const found = providers.find(p => p.provider === provider);
     const key = found?.apiKey || '';
     setApiKey(key);
@@ -61,48 +46,17 @@ const Settings: React.FC = () => {
     setShowKey(false);
   };
 
-  const handleOpenRouterToggle = async (checked: boolean) => {
-    setUseOpenRouter(checked);
-    if (checked) {
-      setSelectedProvider('openrouter');
-      setApiKey('');
-      setOriginalApiKey('');
-    } else if (providers.length > 0) {
-      const first = providers[0];
-      setSelectedProvider(first.provider);
-      setApiKey(first.apiKey || '');
-      setOriginalApiKey(first.apiKey || '');
-    }
-    setShowKey(false);
-  };
-
   const handleSave = async () => {
-    const hasApiKeyChange = apiKey !== originalApiKey;
-    const hasOpenRouterChange = useOpenRouter !== originalUseOpenRouter;
-    
-    if (!selectedProvider || (!hasApiKeyChange && !hasOpenRouterChange)) return;
-    
+    if (!selectedProvider || apiKey === originalApiKey) return;
     setSaving(true);
     try {
-      if (useOpenRouter) {
-        await updateOpenRouterSettings({ useOpenRouter: true, apiKey: apiKey || null });
-        setOriginalApiKey(apiKey);
-        setOriginalUseOpenRouter(true);
-      } else {
-        if (hasOpenRouterChange) {
-          await updateOpenRouterSettings({ useOpenRouter: false, apiKey: null });
-          setOriginalUseOpenRouter(false);
-        }
-        if (hasApiKeyChange) {
-          await saveApiKey({ provider: selectedProvider, apiKey });
-          setOriginalApiKey(apiKey);
-          setProviders(prev => prev.map(p => 
-            p.provider === selectedProvider ? { ...p, apiKey } : p
-          ));
-        }
-      }
+      await saveApiKey({ provider: selectedProvider, apiKey });
+      setOriginalApiKey(apiKey);
+      setProviders(prev => prev.map(p => 
+        p.provider === selectedProvider ? { ...p, apiKey } : p
+      ));
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      console.error('Failed to save API key:', error);
     } finally {
       setSaving(false);
     }
@@ -112,18 +66,12 @@ const Settings: React.FC = () => {
     if (!selectedProvider) return;
     setSaving(true);
     try {
-      if (useOpenRouter) {
-        await updateOpenRouterSettings({ useOpenRouter: true, apiKey: null });
-        setApiKey('');
-        setOriginalApiKey('');
-      } else {
-        await deleteApiKey(selectedProvider);
-        setApiKey('');
-        setOriginalApiKey('');
-        setProviders(prev => prev.map(p => 
-          p.provider === selectedProvider ? { ...p, apiKey: null } : p
-        ));
-      }
+      await deleteApiKey(selectedProvider);
+      setApiKey('');
+      setOriginalApiKey('');
+      setProviders(prev => prev.map(p => 
+        p.provider === selectedProvider ? { ...p, apiKey: null } : p
+      ));
     } catch (error) {
       console.error('Failed to delete API key:', error);
     } finally {
@@ -131,7 +79,7 @@ const Settings: React.FC = () => {
     }
   };
 
-  const hasChanges = apiKey !== originalApiKey || useOpenRouter !== originalUseOpenRouter;
+  const hasChanges = apiKey !== originalApiKey;
 
   return (
     <div className="flex flex-1 overflow-hidden bg-background-light dark:bg-background-dark">
@@ -155,8 +103,6 @@ const Settings: React.FC = () => {
                 onDelete={handleDelete}
                 loading={loading}
                 saving={saving}
-                useOpenRouter={useOpenRouter}
-                onOpenRouterToggle={handleOpenRouterToggle}
               />
             )}
           </main>

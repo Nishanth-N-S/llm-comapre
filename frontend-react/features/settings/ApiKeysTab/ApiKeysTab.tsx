@@ -16,8 +16,6 @@ interface ApiKeysTabProps {
   onDelete: () => void;
   loading: boolean;
   saving: boolean;
-  useOpenRouter: boolean;
-  onOpenRouterToggle: (checked: boolean) => void;
 }
 
 const ApiKeysTab: React.FC<ApiKeysTabProps> = ({ 
@@ -32,17 +30,8 @@ const ApiKeysTab: React.FC<ApiKeysTabProps> = ({
   onSave,
   onDelete,
   loading,
-  saving,
-  useOpenRouter,
-  onOpenRouterToggle
+  saving
 }) => {
-  const openRouterProvider: ProviderApiKey = {
-    provider: 'openrouter',
-    displayName: 'Open Router',
-    apiKey: apiKey || null
-  };
-
-  const displayProviders = useOpenRouter ? [openRouterProvider] : providers;
   return (
     <>
       <div className="flex flex-wrap justify-between gap-3 px-1">
@@ -59,21 +48,9 @@ const ApiKeysTab: React.FC<ApiKeysTabProps> = ({
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700/50">
-              <input
-                type="checkbox"
-                id="use-openrouter"
-                checked={useOpenRouter}
-                onChange={(e) => onOpenRouterToggle(e.target.checked)}
-                className="w-5 h-5 text-primary bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary/50 cursor-pointer"
-              />
-              <label htmlFor="use-openrouter" className="text-gray-900 dark:text-white text-sm font-medium cursor-pointer">
-                Use Open Router
-              </label>
-            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <ProviderSelect 
-                providers={displayProviders}
+                providers={providers}
                 selectedProvider={selectedProvider}
                 onProviderChange={onProviderChange}
               />
