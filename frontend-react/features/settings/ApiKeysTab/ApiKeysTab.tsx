@@ -37,7 +37,7 @@ const ApiKeysTab: React.FC<ApiKeysTabProps> = ({
       <div className="flex flex-wrap justify-between gap-3 px-1">
         <div className="flex min-w-72 flex-col gap-2">
           <p className="text-gray-900 dark:text-white text-3xl font-bold tracking-[-0.033em]">API Keys</p>
-          <p className="text-gray-500 dark:text-gray-400 text-base font-normal leading-normal">Select a provider to add or update your API key.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-base font-normal leading-normal">Select a provider to add or update your API key or URL.</p>
         </div>
       </div>
 
@@ -62,6 +62,7 @@ const ApiKeysTab: React.FC<ApiKeysTabProps> = ({
                 onDelete={onDelete}
                 saving={saving}
                 hasKey={!!apiKey}
+                authType={providers.find(p => p.provider === selectedProvider)?.authType || 'api_key'}
               />
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700/50 flex justify-end">

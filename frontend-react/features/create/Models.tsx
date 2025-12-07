@@ -1,10 +1,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import FormStep from './FormStep';
-import { getModels, Provider } from '../../api';
+import { getModels, Provider, ModelSelection } from '../../api';
 
 interface ModelsProps {
-  selectedModels: string[];
-  onModelsChange: (models: string[]) => void;
+  selectedModels: ModelSelection[];
+  onModelsChange: (models: ModelSelection[]) => void;
 }
 
 const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
@@ -47,21 +47,24 @@ const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
     return activeProvider.models.filter(m => m.toLowerCase().includes(q));
   }, [activeProvider, query]);
 
-  const toggleModel = (model: string) => {
-    if (selectedModels.includes(model)) {
-      onModelsChange(selectedModels.filter(m => m !== model));
+  const toggleModel = (model: string, provider: string) => {
+    const isSelected = selectedModels.some(m => m.model === model && m.provider === provider);
+    if (isSelected) {
+      onModelsChange(selectedModels.filter(m => !(m.model === model && m.provider === provider)));
     } else {
-      onModelsChange([...selectedModels, model]);
+      onModelsChange([...selectedModels, { model, provider }]);
     }
   };
 
   const selectAllVisible = () => {
-    const toAdd = visibleModels.filter(m => !selectedModels.includes(m));
+    const toAdd = visibleModels
+      .filter(m => !selectedModels.some(sm => sm.model === m && sm.provider === activeProviderId))
+      .map(m => ({ model: m, provider: activeProviderId }));
     if (toAdd.length) onModelsChange([...selectedModels, ...toAdd]);
   };
 
   const clearAllVisible = () => {
-    const remaining = selectedModels.filter(m => !visibleModels.includes(m));
+    const remaining = selectedModels.filter(m => !visibleModels.includes(m.model) || m.provider !== activeProviderId);
     onModelsChange(remaining);
   };
 
@@ -115,7 +118,7 @@ const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
         <div className="flex gap-2 mb-3 overflow-x-auto">
           {providers.map((p) => {
             const isActive = p.id === activeProviderId;
-            const selectedCount = p.models.filter(m => selectedModels.includes(m)).length;
+            const selectedCount = selectedModels.filter(sm => sm.provider === p.id).length;
             return (
               <button
                 key={p.id}
@@ -158,7 +161,7 @@ const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50/50 dark:bg-slate-900/50">
           {visibleModels.map((model) => {
-            const isSelected = selectedModels.includes(model);
+            const isSelected = selectedModels.some(m => m.model === model && m.provider === activeProviderId);
             return (
               <label
                 key={model}
@@ -167,7 +170,7 @@ const Models: React.FC<ModelsProps> = ({ selectedModels, onModelsChange }) => {
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  onChange={() => toggleModel(model)}
+                  onChange={() => toggleModel(model, activeProviderId)}
                   className="w-4 h-4 text-primary border-slate-300 dark:border-slate-600 rounded focus:ring-primary focus:ring-2 flex-shrink-0"
                 />
                 <span className={`text-sm font-medium flex-grow ${isSelected ? 'text-primary' : 'text-black dark:text-white'}`}>

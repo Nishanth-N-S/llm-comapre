@@ -4,6 +4,7 @@ export interface ProviderApiKey {
   provider: string;
   displayName: string;
   apiKey: string | null;
+  authType: 'api_key' | 'url';
 }
 
 export interface GetProvidersResponse {

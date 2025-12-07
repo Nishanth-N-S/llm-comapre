@@ -49,12 +49,17 @@ export const deleteComparisons = async (
   return response.data;
 };
 
+export interface ModelSelection {
+  model: string;
+  provider: string;
+}
+
 export interface CreateComparisonRequest {
   name: string;
   description: string;
   systemPrompt: string;
   userPrompt: string;
-  models: string[];
+  models: ModelSelection[];
   criteria: string[];
   evaluationModel: string;
 }

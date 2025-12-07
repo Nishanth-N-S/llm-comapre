@@ -4,7 +4,7 @@ import Models from '../features/create/Models';
 import PromptDefinition from '../features/create/PromptDefinition';
 import Evaluation from '../features/create/Evaluation/Evaluation';
 import ComparisonSummary from '../features/create/ComparisonSummary';
-import { createComparison } from '../api';
+import { createComparison, ModelSelection } from '../api';
 
 interface CreateComparisonProps {
   onCancel: () => void;
@@ -18,7 +18,7 @@ const CreateComparison: React.FC<CreateComparisonProps> = ({ onCancel, onSaveDra
   const [systemPrompt, setSystemPrompt] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
   const [criteria, setCriteria] = useState<string[]>(['Clarity', 'Conciseness', 'Code Quality']);
-  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [selectedModels, setSelectedModels] = useState<ModelSelection[]>([]);
   const [evaluationModel, setEvaluationModel] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);

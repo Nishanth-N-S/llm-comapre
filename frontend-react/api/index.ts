@@ -6,5 +6,5 @@ export { getStats } from './stats';
 export { getProviders, saveApiKey, deleteApiKey } from './settings';
 export * from './types';
 export type { Provider, GetModelsResponse } from './models';
-export type { CreateComparisonRequest, CreateComparisonResponse } from './comparisons';
+export type { CreateComparisonRequest, CreateComparisonResponse, ModelSelection } from './comparisons';
 export type { ProviderApiKey, GetProvidersResponse, SaveApiKeyRequest, SaveApiKeyResponse, DeleteApiKeyResponse } from './settings';

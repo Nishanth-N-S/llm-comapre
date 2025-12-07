@@ -1,8 +1,9 @@
 import React from 'react';
+import { ModelSelection } from '../../api';
 
 interface ComparisonSummaryProps {
   name: string;
-  models: string[];
+  models: ModelSelection[];
   criteria: string[];
 }
 
@@ -22,8 +23,11 @@ const ComparisonSummary: React.FC<ComparisonSummaryProps> = ({ name, models, cri
             <p className="text-sm font-medium text-slate-400 dark:text-slate-500 mb-1">Models</p>
             {models.length > 0 ? (
               <ul className="list-disc list-inside text-black dark:text-white text-sm space-y-1">
-                {models.map((model) => (
-                  <li key={model}>{model}</li>
+                {models.map((modelSelection) => (
+                  <li key={`${modelSelection.provider}-${modelSelection.model}`}>
+                    {modelSelection.model}
+                    <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">({modelSelection.provider})</span>
+                  </li>
                 ))}
               </ul>
             ) : (
